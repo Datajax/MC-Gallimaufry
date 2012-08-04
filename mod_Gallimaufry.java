@@ -50,12 +50,24 @@ public class mod_Gallimaufry extends BaseMod
 		    PlaceData storeme = new PlaceData(breaker.nextToken(),Integer.decode(breaker.nextToken()),breaker.nextToken());
 			if(gallimaufry.containsKey(storeme.foundinBiome))
 			{
-				//sort before this step in most rare to least rare
-				gallimaufry.get(storeme.foundinBiome).add(storeme);
+							
+				List <PlaceData> tempList = gallimaufry.get(storeme.foundinBiome);
+				int x = 0;
+				while(x < tempList.size())
+				{
+					//int templistrare = gallimaufry.get(storeme.foundinBiome).get(x).rarity;
+					//int tempthisrare = storeme.rarity;
+				
+					if(storeme.rarity > tempList.get(x).rarity) {break;}
+					x++;
+				}
+				gallimaufry.get(storeme.foundinBiome).add(x, storeme);
+				
 			}else{
 				List <PlaceData> tempList =  new ArrayList <PlaceData>();
 				gallimaufry.put(storeme.foundinBiome, tempList);
 				gallimaufry.get(storeme.foundinBiome).add(storeme);
+				
 			}
 		    //System.out.print(sites.get(0).fileName);
 			}
@@ -72,6 +84,9 @@ public class mod_Gallimaufry extends BaseMod
    {
 		System.out.println(world.getBiomeGenForCoords(i, j).biomeName);
 		String usingBiome = "All";
+		
+		
+		
 		if(gallimaufry.containsKey(world.getBiomeGenForCoords(i, j).biomeName))
 		{
 			usingBiome = world.getBiomeGenForCoords(i, j).biomeName;
@@ -106,7 +121,7 @@ public class mod_Gallimaufry extends BaseMod
 		// clears the comment line
 		placeLines.readLine();
 		int zplane = i;
-		int yplane = 80;
+		int yplane = 62;
 		int xplane = j;
 		while((currLine = placeLines.readLine()) != null )
 		{
@@ -114,6 +129,14 @@ public class mod_Gallimaufry extends BaseMod
 			while (breaker.hasMoreTokens())
 			{
 				String nextToken = breaker.nextToken();
+				if(nextToken.startsWith("H"))
+				{
+					StringTokenizer heighter =  new StringTokenizer(nextToken);
+					String type = heighter.nextToken(":");
+					String height = heighter.nextToken();
+					yplane = Integer.parseInt(height);
+					zplane = i - 1;
+				}
 				if(nextToken.startsWith("B"))
 				{
 					// x y z blockid
