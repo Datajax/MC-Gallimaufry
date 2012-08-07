@@ -55,8 +55,6 @@ public class mod_Gallimaufry extends BaseMod
 				int x = 0;
 				while(x < tempList.size())
 				{
-					//int templistrare = gallimaufry.get(storeme.foundinBiome).get(x).rarity;
-					//int tempthisrare = storeme.rarity;
 				
 					if(storeme.rarity > tempList.get(x).rarity) {break;}
 					x++;
@@ -100,8 +98,11 @@ public class mod_Gallimaufry extends BaseMod
 			//Looking for a site to use based on rarest first
 			//build site once it is found
 
-			if(random.nextInt() % sitesForBiome.get(x).rarity == 0)
+			//if(random.nextInt() % sitesForBiome.get(x).rarity == 0)
+			if(true)	
 			{
+				//System.out.println(world.getBiomeGenForCoords(i, j));
+				System.out.println("Building " + sitesForBiome.get(x).fileName );
 				buildSite (sitesForBiome.get(x).fileName, i , j, world);
 				break;
 			}
