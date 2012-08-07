@@ -2,7 +2,7 @@ package net.minecraft.src;
 
 public class PlaceData{
 	
-	public static int rarity;
+	public int rarity;
 	public String fileName;
 	public String foundinBiome;
 	
