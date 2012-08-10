@@ -98,11 +98,9 @@ public class mod_Gallimaufry extends BaseMod
 			//Looking for a site to use based on rarest first
 			//build site once it is found
 
-			//if(random.nextInt() % sitesForBiome.get(x).rarity == 0)
-			if(true)	
+			if(random.nextInt() % sitesForBiome.get(x).rarity == 0)
 			{
 				//System.out.println(world.getBiomeGenForCoords(i, j));
-				System.out.println("Building " + sitesForBiome.get(x).fileName );
 				buildSite (sitesForBiome.get(x).fileName, i , j, world);
 				break;
 			}
@@ -114,9 +112,11 @@ public class mod_Gallimaufry extends BaseMod
 	
 	public void buildSite (String fileForSite, int i, int j, World world)
 	{
+		System.out.println("Building " + fileForSite);
 		try{
 		InputStream placeFile = new FileInputStream ("things\\" + fileForSite);
 		BufferedReader placeLines = new BufferedReader (new InputStreamReader(placeFile));
+		String type;
 		String currLine;
 		StringTokenizer breaker;
 		// clears the comment line
@@ -130,30 +130,42 @@ public class mod_Gallimaufry extends BaseMod
 			while (breaker.hasMoreTokens())
 			{
 				String nextToken = breaker.nextToken();
-				if(nextToken.startsWith("H"))
+				switch(nextToken.charAt(0))
 				{
-					StringTokenizer heighter =  new StringTokenizer(nextToken);
-					String type = heighter.nextToken(":");
-					String height = heighter.nextToken();
-					yplane = Integer.parseInt(height);
-					zplane = i - 1;
-				}
-				if(nextToken.startsWith("B"))
-				{
-					// x y z blockid
+				 case 'H':
+					 // Sets the height. Intended to be used at the beginning of a site
+					 StringTokenizer heighter =  new StringTokenizer(nextToken);
+					 type = heighter.nextToken(":");
+					 String height = heighter.nextToken();
+					 yplane = Integer.parseInt(height);
+					 zplane = i - 1;
+					 break;
+				 case 'B':
+					 // Sets the block for the current space
 					StringTokenizer blocker =  new StringTokenizer(nextToken);
-					String type = blocker.nextToken("(");
+					type = blocker.nextToken("(");
 					String blockID = blocker.nextToken(",");
 					blockID = blockID.substring(1);
 					String metaData = blocker.nextToken(")");
 					metaData = metaData.substring(1);
+					TileEntity tile;
 					world.setBlockAndMetadata(xplane, yplane, zplane, Integer.parseInt(blockID), Integer.parseInt(metaData));
-				}
-				if(nextToken.startsWith("U"))
-				{
-					yplane++;
+					break;
+				 case 'T':
+					 // Intended to be the case for tile entities.
+					 break;
+				 case 'E':
+					 // Intended to be the case for normal mobs
+					 StringTokenizer entiter = new StringTokenizer(nextToken);
+					 type = entiter.nextToken("(");
+					 spawnEntity(entiter.nextToken(",").substring(1),world,xplane,yplane,zplane);
+					 break;
+				 case 'U':
+					 yplane++;
 					zplane = i - 1;
 					continue;
+				 case 'S':
+					 break;
 				}
 				xplane++;
 			}
@@ -167,6 +179,252 @@ public class mod_Gallimaufry extends BaseMod
 			System.exit(-1);
 		}
 	}
-   
+    public void spawnEntity(String entityToSpawn,World world, int xplane, int yplane, int zplane)
+    {    
+    	//Spawn a creeper
+    	if(entityToSpawn.contentEquals("Cr"))
+    	{	
+    		EntityCreeper creeper = new EntityCreeper(world);
+    		creeper.entityAge = -24000;
+    		creeper.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(creeper);
+    		return;
+    	}
+    	//Spawn an Enderman
+    	if(entityToSpawn.contentEquals("En"))
+    	{
+    		EntityEnderman enderman = new EntityEnderman(world);
+    		enderman.entityAge = -24000;
+    		enderman.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(enderman);
+    		return;
+    	}
+    	//Spawn a Skeleton
+    	if(entityToSpawn.contentEquals("Sk"))
+    	{
+    		EntitySkeleton skeleton = new EntitySkeleton(world);
+    		skeleton.entityAge = -24000;
+    		skeleton.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(skeleton);
+    		return;
+    	}
+    	//Spawn a Zombie
+    	if(entityToSpawn.contentEquals("Zo"))
+    	{
+    		EntityZombie zombie = new EntityZombie(world);
+    		zombie.entityAge = -24000;
+    		zombie.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(zombie);
+    		return;
+    	}
+    	//Spawn a Slime
+    	if(entityToSpawn.contentEquals("Sl"))
+    	{
+    		EntitySlime slime = new EntitySlime(world);
+    		slime.entityAge = -24000;
+    		slime.setSlimeSize(3);
+    		slime.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(slime);
+    		return;
+    	}
+    	//Spawn a Spider
+    	if(entityToSpawn.contentEquals("Sp"))
+    	{
+    		EntitySpider spider = new EntitySpider(world);
+    		spider.entityAge = -24000;
+    		spider.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(spider);
+    		return;
+    	}
+    	//Spawn a Cave Spider
+    	if(entityToSpawn.contentEquals("Cs"))
+    	{
+    		EntityCaveSpider cavespider = new EntityCaveSpider(world);
+    		cavespider.entityAge = -24000;
+    		cavespider.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(cavespider);
+    		return;
+    	}
+    	//Spawn a Ghast
+    	if(entityToSpawn.contentEquals("Gh"))
+    	{
+    		EntityGhast ghast = new EntityGhast(world);
+    		ghast.entityAge = -24000;
+    		ghast.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(ghast);
+    		return;
+    	}
+    	//Spawn a Blaze
+    	if(entityToSpawn.contentEquals("Bl"))
+    	{
+    		EntityBlaze blaze = new EntityBlaze(world);
+    		blaze.entityAge = -24000;
+    		blaze.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(blaze);
+    		return;
+    	}
+    	//Spawn a Magma Cube
+    	if(entityToSpawn.contentEquals("Ma"))
+    	{
+    		EntityMagmaCube magmacube = new EntityMagmaCube(world);
+    		magmacube.entityAge = -24000;
+    		magmacube.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(magmacube);
+    		return;
+    	}
+    	//Spawn a Dragon
+    	if(entityToSpawn.contentEquals("Dr"))
+    	{
+    		EntityDragon dragon = new EntityDragon(world);
+    		dragon.entityAge = -24000;
+    		dragon.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(dragon);
+    		return;
+    	}
+    	//Spawn a sheep
+    	if(entityToSpawn.contentEquals("Sh"))
+    	{
+    		EntitySheep sheep = new EntitySheep(world);
+    		sheep.entityAge = -2;
+    		sheep.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(sheep);
+    		return;
+    	}
+    	//Spawn a Cow
+    	if(entityToSpawn.contentEquals("Co"))
+    	{
+    		EntityCow cow = new EntityCow(world);
+    		cow.entityAge = -2;
+    		cow.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(cow);
+    		return;
+    	}
+    	//Spawn a Pig
+    	if(entityToSpawn.contentEquals("Pi"))
+    	{
+    		EntityPig pig = new EntityPig(world);
+    		pig.entityAge = -2;
+    		pig.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(pig);
+    		return;
+    	}
+    	//Spawn a Chicken
+    	if(entityToSpawn.contentEquals("Ch"))
+    	{
+    		EntityChicken chicken = new EntityChicken(world);
+    		chicken.entityAge = -2;
+    		chicken.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(chicken);
+    		return;
+    	}
+    	//Spawn a Ocelot
+    	if(entityToSpawn.contentEquals("Ch"))
+    	{
+    		EntityOcelot ocelot = new EntityOcelot(world);
+    		ocelot.entityAge = -2;
+    		ocelot.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(ocelot);
+    		return;
+    	}
+       	//Spawn a Pig Zombie
+    	if(entityToSpawn.contentEquals("Pz"))
+    	{
+    		EntityPigZombie pigzombie = new EntityPigZombie(world);
+    		pigzombie.entityAge = -24000;
+    		pigzombie.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(pigzombie);
+    		return;
+    	}
+       	//Spawn a boat
+    	if(entityToSpawn.contentEquals("Bo"))
+    	{
+    		EntityBoat boat = new EntityBoat(world);
+    		//boat.entityAge = -2;
+    		boat.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(boat);
+    		return;
+    	}
+       	//Spawn a Iron Golem
+    	if(entityToSpawn.contentEquals("Ir"))
+    	{
+    		EntityIronGolem irongolem = new EntityIronGolem(world);
+    		irongolem.entityAge = -24000;
+    		irongolem.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(irongolem);
+    		return;
+    	}
+       	//Spawn a Giant Zombie
+    	if(entityToSpawn.contentEquals("Gi"))
+    	{
+    		EntityGiantZombie giant = new EntityGiantZombie(world);
+    		giant.entityAge = -24000;
+    		giant.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(giant);
+    		return;
+    	}
+       	//Spawn a Mine Cart
+    	if(entityToSpawn.contentEquals("Mi"))
+    	{
+    		EntityMinecart cart = new EntityMinecart(world);
+    		//cart.entityAge = -24000;
+    		cart.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(cart);
+    		return;
+    	}
+       	//Spawn a Mooshroom
+    	if(entityToSpawn.contentEquals("Gi"))
+    	{
+    		EntityMooshroom moosh = new EntityMooshroom(world);
+    		moosh.entityAge = -2;
+    		moosh.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(moosh);
+    		return;
+    	}
+       	//Spawn a Sliver Fish
+    	if(entityToSpawn.contentEquals("Si"))
+    	{
+    		EntitySilverfish silverfish = new EntitySilverfish(world);
+    		silverfish.entityAge = -24000;
+    		silverfish.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(silverfish);
+    		return;
+    	}
+       	//Spawn a Snowman
+    	if(entityToSpawn.contentEquals("Sn"))
+    	{
+    		EntitySnowman frosty = new EntitySnowman(world);
+    		frosty.entityAge = -24000;
+    		frosty.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(frosty);
+    		return;
+    	}
+       	//Spawn a Squid
+    	if(entityToSpawn.contentEquals("Sq"))
+    	{
+    		EntitySquid squid = new EntitySquid(world);
+    		squid.entityAge = -2;
+    		squid.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(squid);
+    		return;
+    	}
+       	//Spawn a Villager
+    	if(entityToSpawn.contentEquals("Vi"))
+    	{
+    		EntityVillager villager = new EntityVillager(world);
+    		villager.entityAge = -2;
+    		villager.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(villager);
+    		return;
+    	}
+       	//Spawn a Wolf
+    	if(entityToSpawn.contentEquals("Wo"))
+    	{
+    		EntityWolf wolf = new EntityWolf(world);
+    		wolf.entityAge = -2;
+    		wolf.setLocationAndAngles(xplane, yplane, zplane, 0, 0.0F);
+    		world.spawnEntityInWorld(wolf);
+    		return;
+    	}
+    }
 	
 }
