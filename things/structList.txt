@@ -1,2 +1,2 @@
 // Filename rarity Biome found in
-SmallBoat.txt 1 All
+SmallBoat.txt 3 All
