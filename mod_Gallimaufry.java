@@ -4,10 +4,16 @@ package net.minecraft.src;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,24 +21,27 @@ import java.util.Random;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.Map;
+import java.util.logging.Logger;
+
+import net.minecraft.client.Minecraft;
 
 public class mod_Gallimaufry extends BaseMod
 {
 
 	public Map <String,List <PlaceData>> gallimaufry;
 	
-	
 	public String getVersion()
 	{
-		return "1.2.5";
+		return "1.3.1";
 	}
 	
 	public void load()
 	{
-				try{
+		    try{
 			
 		    // Input setup to read in the list of sites.
-			InputStream listOfPlaces = new FileInputStream ("things\\structList.txt");
+			
+			InputStream listOfPlaces = new FileInputStream (Minecraft.getMinecraftDir() + "/things/structList.txt");
 			BufferedReader bufferedPlaces = new BufferedReader (new InputStreamReader(listOfPlaces));
 			
 			// To become a map of Biomes to places
@@ -73,8 +82,7 @@ public class mod_Gallimaufry extends BaseMod
 			
 		} catch (IOException e)
 		{
-			System.err.println("Unable to read from file");
-			System.exit(-1);
+			e.printStackTrace();
 		}
 	}
 	
@@ -114,7 +122,8 @@ public class mod_Gallimaufry extends BaseMod
 	{
 		System.out.println("Building " + fileForSite);
 		try{
-		InputStream placeFile = new FileInputStream ("things\\" + fileForSite);
+			File temp = new File (Minecraft.getMinecraftDir() + "/things/" + fileForSite);
+		InputStream placeFile = new FileInputStream (Minecraft.getMinecraftDir() + "/things/" + fileForSite);
 		BufferedReader placeLines = new BufferedReader (new InputStreamReader(placeFile));
 		String type;
 		String currLine;
@@ -148,14 +157,37 @@ public class mod_Gallimaufry extends BaseMod
 					blockID = blockID.substring(1);
 					String metaData = blocker.nextToken(")");
 					metaData = metaData.substring(1);
-					TileEntity tile;
 					world.setBlockAndMetadata(xplane, yplane, zplane, Integer.parseInt(blockID), Integer.parseInt(metaData));
 					break;
 				 case 'T':
 					 // Intended to be the case for tile entities.
-					 break;
+					 StringTokenizer tiler = new StringTokenizer(nextToken);
+					 type = tiler.nextToken("(");
+					 String tileID = tiler.nextToken(",");
+					 blockID = tileID.substring(1);
+					 String tmetaData = tiler.nextToken(")");
+					 TileEntity tile;
+					 metaData = tmetaData.substring(1);
+					 
+					//Piston 
+					if (Integer.parseInt(blockID) == 29)
+					{   
+						world.setBlockAndMetadata(xplane, yplane, zplane, Integer.parseInt(blockID),Integer.parseInt(metaData));
+					}
+					//Chest
+					if (Integer.parseInt(blockID) == 54)
+					{
+						TileEntityChest chest = new TileEntityChest();
+						world.setBlock(xplane, yplane, zplane, Integer.parseInt(blockID));
+						world.setBlockTileEntity(xplane, yplane, zplane, chest);
+						chest.blockMetadata = Integer.parseInt(metaData);
+						chest.setInventorySlotContents(2, new ItemStack(Item.stick,5));
+						world.setBlockMetadata(xplane, yplane, zplane,Integer.parseInt(metaData));
+						//world.setBlockAndMetadata(xplane, yplane, zplane, Integer.parseInt(blockID),Integer.parseInt(metaData));
+					}
+					  break;
 				 case 'E':
-					 // Intended to be the case for normal mobs
+					 // Intended to be the case for normal mobs and other entities like carts
 					 StringTokenizer entiter = new StringTokenizer(nextToken);
 					 type = entiter.nextToken("(");
 					 spawnEntity(entiter.nextToken(",").substring(1),world,xplane,yplane,zplane);
@@ -175,8 +207,7 @@ public class mod_Gallimaufry extends BaseMod
 		return;
 		} catch (IOException e)
 		{
-			System.err.println("Unable to read from file");
-			System.exit(-1);
+			e.printStackTrace();
 		}
 	}
     public void spawnEntity(String entityToSpawn,World world, int xplane, int yplane, int zplane)
