@@ -128,6 +128,7 @@ public class mod_Gallimaufry extends BaseMod
 		String type;
 		String currLine;
 		StringTokenizer breaker;
+		ItemStack []  contents = new ItemStack [36];
 		// clears the comment line
 		placeLines.readLine();
 		int zplane = i;
@@ -181,11 +182,33 @@ public class mod_Gallimaufry extends BaseMod
 						world.setBlock(xplane, yplane, zplane, Integer.parseInt(blockID));
 						world.setBlockTileEntity(xplane, yplane, zplane, chest);
 						chest.blockMetadata = Integer.parseInt(metaData);
-						chest.setInventorySlotContents(2, new ItemStack(Item.stick,5));
+						
+						chest.setInventorySlotContents(2, contents[0]);
 						world.setBlockMetadata(xplane, yplane, zplane,Integer.parseInt(metaData));
 						//world.setBlockAndMetadata(xplane, yplane, zplane, Integer.parseInt(blockID),Integer.parseInt(metaData));
 					}
 					  break;
+				 case 'C':
+					 //Sets container contents
+					 StringTokenizer container = new StringTokenizer(nextToken);
+					 type = container.nextToken("(");
+					 String contentsToStore = container.nextToken();
+					 StringTokenizer contenter = new StringTokenizer(contentsToStore);
+					 while(contenter.hasMoreTokens())
+					 {
+						 String itemStack = contenter.nextToken(",").substring(1);
+						 if (itemStack.contentEquals(")"))
+						 {
+							 break;
+						 }
+						 Item myItem =new Item(100);
+						 int test = myItem.shiftedIndex;
+						 String temp2 = contenter.nextToken("}").substring(1);
+						 ItemStack myStack = new ItemStack(myItem, Integer.parseInt(temp2));
+						 contents[0] = myStack;
+					 }
+					 zplane = i - 1;
+					 break;
 				 case 'E':
 					 // Intended to be the case for normal mobs and other entities like carts
 					 StringTokenizer entiter = new StringTokenizer(nextToken);
@@ -210,6 +233,10 @@ public class mod_Gallimaufry extends BaseMod
 			e.printStackTrace();
 		}
 	}
+	
+	/****
+	// This spawns the entity passed into the world at the specified XYZ.
+	*****/
     public void spawnEntity(String entityToSpawn,World world, int xplane, int yplane, int zplane)
     {    
     	//Spawn a creeper
@@ -458,4 +485,6 @@ public class mod_Gallimaufry extends BaseMod
     	}
     }
 	
+
+
 }
