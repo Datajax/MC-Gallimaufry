@@ -109,7 +109,7 @@ public class mod_Gallimaufry extends BaseMod
 			if(random.nextInt() % sitesForBiome.get(x).rarity == 0)
 			{
 				//System.out.println(world.getBiomeGenForCoords(i, j));
-				buildSite (sitesForBiome.get(x).fileName, i , j, world);
+				buildSite (sitesForBiome.get(x).fileName, i , j, world, random);
 				break;
 			}
 			
@@ -118,7 +118,7 @@ public class mod_Gallimaufry extends BaseMod
 		}
 	}
 	
-	public void buildSite (String fileForSite, int i, int j, World world)
+	public void buildSite (String fileForSite, int i, int j, World world, Random random)
 	{
 		System.out.println("Building " + fileForSite);
 		try{
@@ -163,37 +163,15 @@ public class mod_Gallimaufry extends BaseMod
 				 case 'T':
 					 // Intended to be the case for tile entities.
 					 StringTokenizer tiler = new StringTokenizer(nextToken);
-					 type = tiler.nextToken("(");
-					 String tileID = tiler.nextToken(",");
-					 blockID = tileID.substring(1);
-					 String tmetaData = tiler.nextToken(")");
-					 TileEntity tile;
-					 metaData = tmetaData.substring(1);
-					 
-					//Piston 
-					if (Integer.parseInt(blockID) == 29)
-					{   
-						world.setBlockAndMetadata(xplane, yplane, zplane, Integer.parseInt(blockID),Integer.parseInt(metaData));
-					}
-					//Chest
-					if (Integer.parseInt(blockID) == 54)
-					{
-						TileEntityChest chest = new TileEntityChest();
-						world.setBlock(xplane, yplane, zplane, Integer.parseInt(blockID));
-						world.setBlockTileEntity(xplane, yplane, zplane, chest);
-						chest.blockMetadata = Integer.parseInt(metaData);
-						
-						chest.setInventorySlotContents(2, contents[0]);
-						world.setBlockMetadata(xplane, yplane, zplane,Integer.parseInt(metaData));
-						//world.setBlockAndMetadata(xplane, yplane, zplane, Integer.parseInt(blockID),Integer.parseInt(metaData));
-					}
-					  break;
+					 createTileEntity(tiler,world,xplane,yplane,zplane,contents,random);
+					 break;
 				 case 'C':
-					 //Sets container contents
+					 //Sets container contents..
 					 StringTokenizer container = new StringTokenizer(nextToken);
 					 type = container.nextToken("(");
 					 String contentsToStore = container.nextToken();
 					 StringTokenizer contenter = new StringTokenizer(contentsToStore);
+					 
 					 while(contenter.hasMoreTokens())
 					 {
 						 String itemStack = contenter.nextToken(",").substring(1);
@@ -201,13 +179,16 @@ public class mod_Gallimaufry extends BaseMod
 						 {
 							 break;
 						 }
-						 Item myItem =new Item(100);
-						 int test = myItem.shiftedIndex;
-						 String temp2 = contenter.nextToken("}").substring(1);
-						 ItemStack myStack = new ItemStack(myItem, Integer.parseInt(temp2));
-						 contents[0] = myStack;
+					 
+						 Item itemForContainer = getItem(Integer.parseInt(itemStack));
+						 if(itemForContainer.getItemStackLimit() > 1)
+						 {
+							 contents [0] = new ItemStack(itemForContainer, Integer.parseInt(contenter.nextToken("}").substring(1)));
+						 } else {
+							 contents [0] = new ItemStack(itemForContainer);
+						 }
 					 }
-					 zplane = i - 1;
+					 zplane = i - 1;			 
 					 break;
 				 case 'E':
 					 // Intended to be the case for normal mobs and other entities like carts
@@ -234,6 +215,8 @@ public class mod_Gallimaufry extends BaseMod
 		}
 	}
 	
+
+
 	/****
 	// This spawns the entity passed into the world at the specified XYZ.
 	*****/
@@ -485,6 +468,245 @@ public class mod_Gallimaufry extends BaseMod
     	}
     }
 	
+    /***
+     * This creates a Tile Entity at the location and loads it with contents
+     */
+	private void createTileEntity(StringTokenizer tiler, World world,
+			int xplane, int yplane, int zplane, ItemStack[] contents,
+			Random random) {
+		
+		
+		 String type = tiler.nextToken("(");
+		 String tileID = tiler.nextToken(",");
+		 String blockID = tileID.substring(1);
+		 String tmetaData = tiler.nextToken(")");
+		 TileEntity tile;
+		 String metaData = tmetaData.substring(1);
+		 
+		//Piston 
+		if (Integer.parseInt(blockID) == 29)
+		{   
+			world.setBlockAndMetadata(xplane, yplane, zplane, Integer.parseInt(blockID),Integer.parseInt(metaData));
+		}
+		//Chest
+		if (Integer.parseInt(blockID) == 54)
+		{
+			world.setBlockWithNotify(xplane, yplane, zplane, Block.chest.blockID);
+            TileEntityChest chest = (TileEntityChest)world.getBlockTileEntity(xplane, yplane, zplane);
+			world.setBlockMetadata(xplane, yplane, zplane, Integer.parseInt(metaData));
+			chest.setInventorySlotContents(2, contents[0]);
+		}
+		//Dipenser
+		if (Integer.parseInt(blockID) == 23)
+		{
+			world.setBlockWithNotify(xplane, yplane, zplane, Block.dispenser.blockID);
+            TileEntityDispenser dispenser = (TileEntityDispenser)world.getBlockTileEntity(xplane, yplane, zplane);
+			world.setBlockMetadata(xplane, yplane, zplane, Integer.parseInt(metaData));
+			dispenser.setInventorySlotContents(2, contents[0]);
+		}
+	}
 
-
+	
+	public Item getItem (int itemNumber)
+	{
+		switch (itemNumber)
+		{
+		case 256: return Item.shovelSteel; //Iron Shovel
+		case 257: return Item.pickaxeSteel; //Iron Pickaxe
+		case 258: return Item.axeSteel;//Iron Axe
+		case 259: return Item.flintAndSteel; //Flint and Steel
+		case 260: return Item.appleRed; //Apple
+		case 261: return Item.bow; //Bow
+		case 262: return Item.arrow; //Arrow
+		case 263: return Item.coal; //Coal
+		case 264: return Item.diamond;//Diamond
+		case 265: return Item.ingotIron; // Iron Ingot
+		case 266: return Item.ingotGold; //Gold Ingot
+		case 267: return Item.swordSteel; //Iron Sword
+		case 268: return Item.swordWood;//Wooden Sword
+		case 269: return Item.shovelWood;//Wooden Shovel
+		case 270: return Item.pickaxeWood;//Wooden Pickaxe
+		case 271: return Item.axeWood; //Wooden Axe
+		case 272: return Item.swordStone; //Stone Sword
+		case 273: return Item.shovelStone; //Stone Shovel
+		case 274: return Item.pickaxeStone;//Stone Pickaxe
+		case 275: return Item.axeStone; // Stone Axe
+		case 276: return Item.swordDiamond;// Diamond Sword
+		case 277: return Item.shovelDiamond;//Diamond Shovel
+		case 278: return Item.pickaxeDiamond;//Diamond Pickaxe
+		case 279: return Item.axeDiamond; //Diamond Axe
+		case 280: return Item.stick;//Stick
+		case 281: return Item.bowlEmpty; //Bowl
+		case 282: return Item.bowlSoup; //Mushroom Soup
+		case 283: return Item.swordGold;//Gold Sword
+		case 284: return Item.shovelGold;//Gold Shovel
+		case 285: return Item.pickaxeGold;//Gold Pickaxe
+		case 286: return Item.axeGold;//Gold Axe
+		case 287: return Item.silk;//String
+		case 288: return Item.feather;//Feather
+		case 289: return Item.gunpowder;//Sulphur
+		case 290: return Item.hoeWood; //Wooden Hoe
+		case 291: return Item.hoeStone; //Stone Hoe
+		case 292: return Item.hoeSteel;//Iron Hoe
+		case 293: return Item.hoeDiamond;//Diamond Hoe
+		case 294: return Item.hoeGold; //Gold Hoe
+		case 295: return Item.seeds;//Wheat Seeds
+		case 296: return Item.wheat;//Wheat
+		case 297: return Item.bread;//Bread
+		case 298: return Item.helmetLeather;//Leather Helmet
+		case 299: return Item.plateLeather;//Leather Chestplate
+		case 300: return Item.legsLeather;//Leather Leggings
+		case 301: return Item.bootsLeather;//Leather Boots
+		case 302: return Item.helmetChain;//Chainmail Helmet
+		case 303: return Item.plateChain;//Chainmail Chestplate
+		case 304: return Item.legsChain;//Chainmail Leggings
+		case 305: return Item.bootsChain;//Chainmail Boots
+		case 306: return Item.helmetSteel;//Iron Helmet
+		case 307: return Item.plateSteel;//Iron Chestplate
+		case 308: return Item.legsSteel;//Iron Leggings
+		case 309: return Item.bootsSteel;//Iron Boots
+		case 310: return Item.helmetDiamond;//Diamond Helmet
+		case 311: return Item.plateDiamond;//Diamond Chestplate
+		case 312: return Item.legsDiamond;//Diamond Leggings
+/* items to be implemented later
+313
+Diamond Boots
+314
+Gold Helmet
+315
+Gold Chestplate
+316
+Gold Leggings
+317
+Gold Boots
+318
+Flint
+319
+Raw Porkchop
+320
+Cooked Porkchop
+321
+Painting
+322
+Golden Apple
+323
+Sign
+324
+Wooden Door
+325
+Bucket
+326
+Water Bucket
+327
+Lava Bucket
+328
+Minecart
+329
+Saddle
+330
+Iron Door
+331
+Redstone
+332
+Snowball
+333
+Boat
+334
+Leather
+335
+Milk Bucket
+336
+Clay Brick
+337
+Clay Balls
+338
+Sugarcane
+339
+Paper
+340
+Book
+341
+Slimeball
+342
+Storage Minecart
+343
+Powered Minecart
+344
+Egg
+345
+Compass
+346
+Fishing Rod
+347
+Clock
+348
+Glowstone Dust
+349
+Raw Fish
+350
+Cooked Fish
+351
+Bone Meal
+352
+Bone
+353
+Sugar
+354
+Cake
+355
+Bed
+356
+Redstone Repeater
+357
+Cookie
+358
+Map
+359
+Shears
+360
+Melon
+361
+Pumpkin Seeds
+362
+Melon Seeds
+363
+Raw Beef
+364
+Steak
+365
+Raw Chicken
+366
+Cooked Chicken
+367
+Rotten Flesh
+368
+Ender Pearl
+369
+Blaze Rod
+370
+Ghast Tear
+371
+Gold Nugget
+372
+Nether Wart Seeds
+373
+Potion
+374
+Glass Bottle
+375
+Spider Eye
+376
+Fermented Spider Eye
+377
+Blaze Powder
+378
+Magma Cream
+2256
+Gold Music Disc
+2257
+Green Music Disc
+*/
+		}
+		return null;
+	}
 }
