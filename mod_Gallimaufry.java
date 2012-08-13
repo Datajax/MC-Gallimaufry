@@ -17,6 +17,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Random;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -128,7 +129,8 @@ public class mod_Gallimaufry extends BaseMod
 		String type;
 		String currLine;
 		StringTokenizer breaker;
-		ItemStack []  contents = new ItemStack [36];
+		List <ItemStack> contents = new ArrayList <ItemStack>();
+		List <PostItem> postList = new ArrayList <PostItem>();
 		// clears the comment line
 		placeLines.readLine();
 		int zplane = i;
@@ -150,6 +152,20 @@ public class mod_Gallimaufry extends BaseMod
 					 yplane = Integer.parseInt(height);
 					 zplane = i - 1;
 					 break;
+				 case 'G':
+					 //Finds the ground builds off set from there G:0 is on the ground
+					 StringTokenizer grouder =  new StringTokenizer(nextToken);
+					 type = grouder.nextToken(":");
+					 String ground = grouder.nextToken();
+					 int offset = Integer.parseInt(ground);
+					 yplane = 100;
+					 while(!world.isBlockOpaqueCube(xplane, yplane, zplane))
+					 {
+						 yplane--;
+					 }
+					 yplane = yplane + offset;
+					 zplane = i - 1;
+					 break;
 				 case 'B':
 					 // Sets the block for the current space
 					StringTokenizer blocker =  new StringTokenizer(nextToken);
@@ -160,6 +176,19 @@ public class mod_Gallimaufry extends BaseMod
 					metaData = metaData.substring(1);
 					world.setBlockAndMetadata(xplane, yplane, zplane, Integer.parseInt(blockID), Integer.parseInt(metaData));
 					break;
+					
+				 case 'P':
+					 // This is for blocks that depend on other blocks, like torchs.
+					 // With a 'P'ost placement they will be added in last
+						StringTokenizer poster =  new StringTokenizer(nextToken);
+						type = poster.nextToken("(");
+						String postID = poster.nextToken(",");
+						postID = postID.substring(1);
+						String data = poster.nextToken(")");
+						data = data.substring(1);
+						postList.add(new PostItem(Integer.parseInt(postID),Integer.parseInt(data),xplane,yplane,zplane));
+						break;
+					 
 				 case 'T':
 					 // Intended to be the case for tile entities.
 					 StringTokenizer tiler = new StringTokenizer(nextToken);
@@ -175,17 +204,24 @@ public class mod_Gallimaufry extends BaseMod
 					 while(contenter.hasMoreTokens())
 					 {
 						 String itemStack = contenter.nextToken(",").substring(1);
-						 if (itemStack.contentEquals(")"))
-						 {
-							 break;
-						 }
+						 if (itemStack.contentEquals(")")) break;
+						 if( itemStack.contentEquals("")) itemStack = contenter.nextToken(",").substring(1);
 					 
-						 Item itemForContainer = getItem(Integer.parseInt(itemStack));
+						int itemNumber = Integer.parseInt(itemStack);	
+						if (itemNumber < 256)
+						{
+							// Item ID, Quanity, Meta?
+							int amount = Integer.parseInt(contenter.nextToken("}").substring(1));
+							contents.add(new ItemStack(itemNumber,amount, 0));
+							continue;
+						} 
+						 Item itemForContainer = getItem(itemNumber);
+						
 						 if(itemForContainer.getItemStackLimit() > 1)
 						 {
-							 contents [0] = new ItemStack(itemForContainer, Integer.parseInt(contenter.nextToken("}").substring(1)));
+							 contents.add(new ItemStack(itemForContainer, Integer.parseInt(contenter.nextToken("}").substring(1))));
 						 } else {
-							 contents [0] = new ItemStack(itemForContainer);
+							 contents.add(new ItemStack(itemForContainer));
 						 }
 					 }
 					 zplane = i - 1;			 
@@ -199,7 +235,11 @@ public class mod_Gallimaufry extends BaseMod
 				 case 'U':
 					 yplane++;
 					zplane = i - 1;
-					continue;
+					break;
+				 case 'D':
+					 yplane--;
+					 zplane = i - 1;
+					 break;
 				 case 'S':
 					 break;
 				}
@@ -207,6 +247,13 @@ public class mod_Gallimaufry extends BaseMod
 			}
 			xplane = j;
 			zplane++;
+		}
+		Iterator<PostItem> postMe = postList.iterator();
+		while(postMe.hasNext())
+		{
+			PostItem me = postMe.next();
+			world.setBlock(me.xplane, me.yplane, me.zplane,me.blockID );
+			world.setBlockMetadataWithNotify(me.xplane, me.yplane, me.zplane, me.metaData);
 		}
 		return;
 		} catch (IOException e)
@@ -472,7 +519,7 @@ public class mod_Gallimaufry extends BaseMod
      * This creates a Tile Entity at the location and loads it with contents
      */
 	private void createTileEntity(StringTokenizer tiler, World world,
-			int xplane, int yplane, int zplane, ItemStack[] contents,
+			int xplane, int yplane, int zplane, List <ItemStack> contents,
 			Random random) {
 		
 		
@@ -482,6 +529,7 @@ public class mod_Gallimaufry extends BaseMod
 		 String tmetaData = tiler.nextToken(")");
 		 TileEntity tile;
 		 String metaData = tmetaData.substring(1);
+		 ItemStack[] myStack;
 		 
 		//Piston 
 		if (Integer.parseInt(blockID) == 29)
@@ -494,7 +542,11 @@ public class mod_Gallimaufry extends BaseMod
 			world.setBlockWithNotify(xplane, yplane, zplane, Block.chest.blockID);
             TileEntityChest chest = (TileEntityChest)world.getBlockTileEntity(xplane, yplane, zplane);
 			world.setBlockMetadata(xplane, yplane, zplane, Integer.parseInt(metaData));
-			chest.setInventorySlotContents(2, contents[0]);
+			myStack = contents.toArray(new ItemStack [36]);
+			for(int iii = 0; iii < myStack.length;iii++)
+			{
+			chest.setInventorySlotContents(iii, myStack[iii]);
+			}
 		}
 		//Dipenser
 		if (Integer.parseInt(blockID) == 23)
@@ -502,15 +554,20 @@ public class mod_Gallimaufry extends BaseMod
 			world.setBlockWithNotify(xplane, yplane, zplane, Block.dispenser.blockID);
             TileEntityDispenser dispenser = (TileEntityDispenser)world.getBlockTileEntity(xplane, yplane, zplane);
 			world.setBlockMetadata(xplane, yplane, zplane, Integer.parseInt(metaData));
-			dispenser.setInventorySlotContents(2, contents[0]);
+			myStack = contents.toArray(new ItemStack [9]);
+			for(int iii = 0; iii < myStack.length;iii++)
+			{
+				dispenser.setInventorySlotContents(iii, myStack[iii]);
+			}
 		}
 	}
 
 	
 	public Item getItem (int itemNumber)
 	{
+		
 		switch (itemNumber)
-		{
+		{	
 		case 256: return Item.shovelSteel; //Iron Shovel
 		case 257: return Item.pickaxeSteel; //Iron Pickaxe
 		case 258: return Item.axeSteel;//Iron Axe
@@ -568,144 +625,85 @@ public class mod_Gallimaufry extends BaseMod
 		case 310: return Item.helmetDiamond;//Diamond Helmet
 		case 311: return Item.plateDiamond;//Diamond Chestplate
 		case 312: return Item.legsDiamond;//Diamond Leggings
-/* items to be implemented later
-313
-Diamond Boots
-314
-Gold Helmet
-315
-Gold Chestplate
-316
-Gold Leggings
-317
-Gold Boots
-318
-Flint
-319
-Raw Porkchop
-320
-Cooked Porkchop
-321
-Painting
-322
-Golden Apple
-323
-Sign
-324
-Wooden Door
-325
-Bucket
-326
-Water Bucket
-327
-Lava Bucket
-328
-Minecart
-329
-Saddle
-330
-Iron Door
-331
-Redstone
-332
-Snowball
-333
-Boat
-334
-Leather
-335
-Milk Bucket
-336
-Clay Brick
-337
-Clay Balls
-338
-Sugarcane
-339
-Paper
-340
-Book
-341
-Slimeball
-342
-Storage Minecart
-343
-Powered Minecart
-344
-Egg
-345
-Compass
-346
-Fishing Rod
-347
-Clock
-348
-Glowstone Dust
-349
-Raw Fish
-350
-Cooked Fish
-351
-Bone Meal
-352
-Bone
-353
-Sugar
-354
-Cake
-355
-Bed
-356
-Redstone Repeater
-357
-Cookie
-358
-Map
-359
-Shears
-360
-Melon
-361
-Pumpkin Seeds
-362
-Melon Seeds
-363
-Raw Beef
-364
-Steak
-365
-Raw Chicken
-366
-Cooked Chicken
-367
-Rotten Flesh
-368
-Ender Pearl
-369
-Blaze Rod
-370
-Ghast Tear
-371
-Gold Nugget
-372
-Nether Wart Seeds
-373
-Potion
-374
-Glass Bottle
-375
-Spider Eye
-376
-Fermented Spider Eye
-377
-Blaze Powder
-378
-Magma Cream
-2256
-Gold Music Disc
-2257
-Green Music Disc
-*/
+		case 313: return Item.bootsDiamond;//Diamond Boots
+		case 314: return Item.helmetGold;//Gold Helmet
+		case 315: return Item.plateGold;//Gold Chestplate
+		case 316: return Item.legsGold;//Gold Leggings
+		case 317: return Item.bootsGold;//Gold Boots
+		case 318: return Item.flint;//Flint
+		case 319: return Item.porkRaw;//Raw Porkchop
+		case 320: return Item.porkCooked;//Cooked Porkchop
+		case 321: return Item.painting;//Painting
+		case 322: return Item.appleGold;//Golden Apple
+		case 323: return Item.sign;//Sign
+		case 324: return Item.doorWood;//Wooden Door
+		case 325: return Item.bucketEmpty;//Bucket
+		case 326: return Item.bucketWater;//Water Bucket
+		case 327: return Item.bucketLava;//Lava Bucket
+		case 328: return Item.minecartEmpty;//Minecart
+		case 329: return Item.saddle;//Saddle
+		case 330: return Item.doorSteel;//Iron Door
+		case 331: return Item.redstone;//Redstone
+		case 332: return Item.snowball;//Snowball
+		case 333: return Item.boat;//Boat
+		case 334: return Item.leather;//Leather
+		case 335: return Item.bucketMilk;//Milk Bucket
+		case 336: return Item.brick;//Clay Brick
+		case 337: return Item.clay;//Clay Balls
+		case 338: return Item.reed;//Sugarcane
+		case 339: return Item.paper;//Paper
+		case 340: return Item.book;//Book
+		case 341: return Item.slimeBall;//Slimeball
+		case 342: return Item.minecartCrate;//Storage Minecart
+		case 343: return Item.minecartPowered;//Powered Minecart
+		case 344: return Item.egg;//Egg
+		case 345: return Item.compass;//Compass
+		case 346: return Item.fishingRod;//Fishing Rod
+		case 347: return Item.pocketSundial;//Clock
+		case 348: return Item.lightStoneDust;//Glowstone Dust
+		case 349: return Item.fishRaw;//Raw Fish
+		case 350: return Item.fishCooked;//Cooked Fish
+		case 351: return Item.dyePowder;//Bone Meal(or default dye?)
+		case 352: return Item.bone;//Bone
+		case 353: return Item.sugar;//Sugar
+		case 354: return Item.cake;//Cake
+		case 355: return Item.bed;//Bed
+		case 356: return Item.redstoneRepeater;//Redstone Repeater
+		case 357: return Item.cookie;//Cookie
+		case 358: return Item.map;//Map
+		case 359: return Item.shears;//Shears
+		case 360: return Item.melon;//Melon
+		case 361: return Item.pumpkinSeeds;//Pumpkin Seeds
+		case 362: return Item.melonSeeds;//Melon Seeds
+		case 363: return Item.beefRaw;//Raw Beef
+		case 364: return Item.beefCooked;//Steak
+		case 365: return Item.chickenRaw;//Raw Chicken
+		case 366: return Item.chickenCooked;//Cooked Chicken
+		case 367: return Item.rottenFlesh;//Rotten Flesh
+		case 368: return Item.enderPearl;//Ender Pearl
+		case 369: return Item.blazeRod;//Blaze Rod
+		case 370: return Item.ghastTear;//Ghast Tear
+		case 371: return Item.goldNugget;//Gold Nugget
+		case 372: return Item.netherStalkSeeds;//Nether Wart Seeds
+		case 373: return Item.potion;//Potion
+		case 374: return Item.glassBottle;//Glass Bottle
+		case 375: return Item.spiderEye;//Spider Eye
+		case 376: return Item.fermentedSpiderEye;//Fermented Spider Eye
+		case 377: return Item.blazePowder;//Blaze Powder
+		case 378: return Item.magmaCream;//Magma Cream
+		case 379: return Item.brewingStand;//Brewing Stand
+		case 380: return Item.cauldron;//Caludron
+		case 381: return Item.eyeOfEnder;//Ender Eye
+		case 382: return Item.speckledMelon;//Glistening Melon
+		case 383: return Item.monsterPlacer;//Spawn Egg
+		case 384: return Item.potion;//Bottle of Enchanting.  Wrong item is here
+		case 385: return Item.fireballCharge;//Fire Charge
+		case 386: return Item.writableBook;//Book and Quill
+		case 387: return Item.writtenBook;//Written book
+		case 388: return Item.emerald; //Emerald
+		case 2256: return Item.record13;//Gold Music Disc
+		case 2257: return Item.recordCat;//Green Music Disc
+
 		}
 		return null;
 	}
