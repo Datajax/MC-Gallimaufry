@@ -1,9 +1,11 @@
 This is the README
 Written by Robert Fesler
-Currently Under the MIT license.  
-Keep posted this may change.
+Copyright (c) 2012 Robert Felser
+Using the MIT license.  
 
-Quick notes about the project and the repo.  This repo will contain only the source I've created.  It is intended to work as an addon to MineCraft and a mod for it called mod loader.   Installation and acquisition may be covered at a later date in the wiki. For now, Google it.  If you are wanting to use the source directly you will also need the MCP (Mine craft coders pack) to decompile Minecraft and add in the current versions of source.  Otherwise there will be a .jar or .zip file in the repo that is the current working version of the mod.  To use that simply, download and add the .class files into the minecraft.jar.  Again, as I am focused on content at the moment. Google mod installation.
+So, MC-Gallimaufry is installed like any other mod, almost.  Open the jar move the .class files from MC-Gallimaufry.jar into your Minecraft.jar.  The take the things/ folder and place it in your .mincraft folder. It should be loaded at the same level as saves/. Make any adjustments you like to things/structList.txt before running Minecraft.  Place maps can be updated as the game runs and the next new instance of the site will load the new map.  Special thanks to Risugami for Modloader.  Nice bit of handles and utilities for Minecraft coding.  Also, many special thanks to Ocean Labs for Minecraft Coder Pack, without it none of this would be here.
+
+For Full details check out the modest wiki at https://github.com/Datajax/MC-Gallimaufry/wiki
 
 That's it for now.
 Thanks,
