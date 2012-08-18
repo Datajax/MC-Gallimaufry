@@ -1,5 +1,9 @@
 package net.minecraft.src;
 
+//File IO form http://www.javacoffeebreak.com/faq/faq0004.html
+//Copyright (c) 2012 Robert Fesler
+//Published under MIT license see COPYING.txt for details
+
 public class PostItem
 {
 	public int blockID;
